@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import { getJson } from '../api/client.js';
 
 type ApiRecord = Record<string, unknown>;
 
 type Props = {
   title: string;
   description: string;
-  endpoint: string;
-  collection: string;
+  loadData: () => Promise<unknown[]>;
   emptyText: string;
 };
 
@@ -21,18 +19,17 @@ function displayValue(value: unknown): string {
   return '';
 }
 
-export function CapabilityCard({ title, description, endpoint, collection, emptyText }: Props) {
+export function CapabilityCard({ title, description, loadData, emptyText }: Props) {
   const [records, setRecords] = useState<ApiRecord[]>([]);
   const [state, setState] = useState<'loading' | 'success' | 'error'>('loading');
 
   useEffect(() => {
     let active = true;
     setState('loading');
-    getJson<Record<string, unknown>>(endpoint)
-      .then((response) => {
-        const result = response[collection];
+    loadData()
+      .then((result) => {
         if (!Array.isArray(result) || !result.every(isApiRecord)) {
-          throw new Error(`Invalid ${collection} response`);
+          throw new Error(`Invalid ${title} response`);
         }
         if (active) {
           setRecords(result);
@@ -46,7 +43,7 @@ export function CapabilityCard({ title, description, endpoint, collection, empty
     return () => {
       active = false;
     };
-  }, [collection, endpoint]);
+  }, [loadData, title]);
 
   return (
     <section className="card h-100">
